@@ -2,10 +2,12 @@ from pathlib import Path
 
 import aiofiles
 from fastapi import HTTPException, UploadFile
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.crud.document import create_document
 from app.crud.document_chunk import create_chunk
+from app.models.document import Document
 from app.services.ingestion_service import IngestionService
 from app.utils.file_utils import (
     generate_unique_filename,
@@ -66,26 +68,51 @@ class DocumentService:
             uploaded_by=uploaded_by,
         )
 
-        # -----------------------------
-        # AI Ingestion Pipeline
-        # -----------------------------
+        print("✅ File saved successfully")
 
-        ingestion = IngestionService()
+        try:
+            ingestion = IngestionService()
 
-        chunks, embeddings = ingestion.process_document(
-            str(upload_path)
-        )
+            print("✅ Ingestion service created")
 
-        # Store chunks in PGVector
-        for index, (chunk, embedding) in enumerate(
-            zip(chunks, embeddings)
-        ):
-            await create_chunk(
-                db=db,
-                document_id=document.id,
-                chunk_index=index,
-                content=chunk,
-                embedding=embedding,
+            chunks, embeddings = ingestion.process_document(
+                str(upload_path)
             )
 
-        return document
+            print(f"✅ Generated {len(chunks)} chunks")
+
+            for index, (chunk, embedding) in enumerate(
+                zip(chunks, embeddings)
+            ):
+                await create_chunk(
+                    db=db,
+                    document_id=document.id,
+                    chunk_index=index,
+                    content=chunk,
+                    embedding=embedding,
+                )
+
+            print("✅ Chunks stored successfully")
+
+            # ✅ IMPORTANT
+            return document
+
+        except Exception:
+            import traceback
+
+            traceback.print_exc()
+
+            raise
+
+    @staticmethod
+    async def get_documents(db: AsyncSession):
+        """
+        Return all uploaded documents.
+        """
+        result = await db.execute(
+            select(Document).order_by(
+                Document.created_at.desc()
+            )
+        )
+
+        return result.scalars().all()

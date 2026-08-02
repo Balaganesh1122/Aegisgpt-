@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 async def semantic_search(
     db: AsyncSession,
     embedding: list[float],
+    document_id: int,
     limit: int = 5,
 ):
     query = text("""
@@ -15,6 +16,7 @@ async def semantic_search(
             content,
             embedding <=> CAST(:embedding AS vector) AS distance
         FROM document_chunks
+        WHERE document_id = :document_id
         ORDER BY embedding <=> CAST(:embedding AS vector)
         LIMIT :limit;
     """)
@@ -23,6 +25,7 @@ async def semantic_search(
         query,
         {
             "embedding": str(embedding),
+            "document_id": document_id,
             "limit": limit,
         },
     )

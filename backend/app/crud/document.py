@@ -13,6 +13,7 @@ async def create_document(
     storage_path: str,
     uploaded_by: int,
 ) -> Document:
+
     document = Document(
         filename=filename,
         original_filename=original_filename,
@@ -35,7 +36,9 @@ async def get_document(
 ) -> Document | None:
 
     result = await db.execute(
-        select(Document).where(Document.id == document_id)
+        select(Document).where(
+            Document.id == document_id
+        )
     )
 
     return result.scalar_one_or_none()
@@ -44,7 +47,9 @@ async def get_document(
 async def get_documents(db: AsyncSession):
 
     result = await db.execute(
-        select(Document).order_by(Document.created_at.desc())
+        select(Document).order_by(
+            Document.created_at.desc()
+        )
     )
 
     return result.scalars().all()

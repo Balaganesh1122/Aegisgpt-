@@ -3,18 +3,17 @@ from sentence_transformers import SentenceTransformer
 
 class EmbeddingService:
     """
-    Generates embeddings for text using a SentenceTransformer model.
+    Generates embeddings using a single shared SentenceTransformer model.
+    The model is loaded only once when the application starts.
     """
 
+    # Shared model instance (Singleton)
+    _model = SentenceTransformer("BAAI/bge-small-en-v1.5")
+
     def __init__(self):
-        self.model = SentenceTransformer(
-            "BAAI/bge-small-en-v1.5"
-        )
+        self.model = EmbeddingService._model
 
     def embed_text(self, text: str) -> list[float]:
-        """
-        Generate an embedding for a single text.
-        """
         embedding = self.model.encode(
             text,
             normalize_embeddings=True,
@@ -26,9 +25,6 @@ class EmbeddingService:
         self,
         documents: list[str],
     ) -> list[list[float]]:
-        """
-        Generate embeddings for multiple documents.
-        """
         embeddings = self.model.encode(
             documents,
             normalize_embeddings=True,

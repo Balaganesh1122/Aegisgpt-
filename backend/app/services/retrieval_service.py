@@ -13,15 +13,17 @@ class RetrievalService:
         self,
         db: AsyncSession,
         question: str,
+        document_id: int,
         top_k: int = 5,
     ):
         # Generate embedding for the user's question
         query_embedding = self.embedding.embed_text(question)
 
-        # Perform semantic search
+        # Search only within the selected document
         results = await semantic_search(
             db=db,
             embedding=query_embedding,
+            document_id=document_id,
             limit=top_k,
         )
 

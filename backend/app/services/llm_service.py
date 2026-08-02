@@ -20,17 +20,13 @@ class LLMService:
         self.model = settings.GEMINI_MODEL
 
     def generate(self, prompt: str) -> str:
-        """
-        Generate a response from Gemini.
-        """
-
         try:
             response = self.client.models.generate_content(
                 model=self.model,
                 contents=prompt,
                 config=types.GenerateContentConfig(
-                    temperature=0.2,
-                    max_output_tokens=1024,
+                    temperature=0.1,
+                    max_output_tokens=4096,
                 ),
             )
 
@@ -42,6 +38,4 @@ class LLMService:
         except Exception as e:
             logger.exception("Gemini API Error")
 
-            return (
-                f"LLM Error: {type(e).__name__}: {str(e)}"
-            )
+            return f"LLM Error: {type(e).__name__}: {str(e)}"

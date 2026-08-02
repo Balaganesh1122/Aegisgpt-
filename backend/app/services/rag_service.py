@@ -15,16 +15,24 @@ class RAGService:
         self,
         db: AsyncSession,
         question: str,
-        top_k: int = 5,
+        document_id: int,
+        top_k: int = 8,
     ):
-
         rows = await self.retriever.retrieve(
             db=db,
             question=question,
+            document_id=document_id,
             top_k=top_k,
         )
 
         contexts = [row.content for row in rows]
+
+        # Debug: print retrieved chunks
+        print("\n========== RETRIEVED CHUNKS ==========\n")
+        for index, row in enumerate(rows):
+            print(f"Chunk {index + 1}")
+            print(row.content)
+            print("--------------------------------------")
 
         prompt = PromptBuilder.build_prompt(
             question=question,
@@ -33,7 +41,17 @@ class RAGService:
 
         answer = self.llm.generate(prompt)
 
+        sources = []
+
+        for row in rows:
+            sources.append(
+                {
+                    "document_id": row.document_id,
+                    "chunk_index": row.chunk_index,
+                }
+            )
+
         return {
             "answer": answer,
-            "contexts": contexts,
+            "sources": sources,
         }
